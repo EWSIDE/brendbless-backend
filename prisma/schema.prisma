@@ -1,0 +1,221 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // PostgreSQL используется и локально, и в продакшене (Railway)
+  // Локально: запусти PostgreSQL через Docker или используй Railway dev environment
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Address {
+  id           String   @id
+  userId       String
+  type         String   @default("SHIPPING")
+  fullName     String
+  phone        String
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  postalCode   String
+  country      String   @default("UA")
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Brand {
+  id          String    @id
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  logo        String?
+  website     String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+  products    Product[]
+}
+
+model CartItem {
+  id        String   @id
+  userId    String
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  Product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+model Category {
+  id             String     @id
+  name           String
+  slug           String     @unique
+  description    String?
+  image          String?
+  parentId       String?
+  isActive       Boolean    @default(true)
+  sortOrder      Int        @default(0)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime
+  parent         Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children       Category[] @relation("CategoryToCategory")
+  products       Product[]
+}
+
+model Order {
+  id              String      @id
+  orderNumber     String      @unique
+  userId          String
+  status          String      @default("PENDING")
+  subtotal        Float
+  shippingCost    Float       @default(0)
+  tax             Float       @default(0)
+  discount        Float       @default(0)
+  discountCode    String?
+  total           Float
+  shippingAddress String?
+  billingAddress  String?
+  paymentMethod   String?
+  paymentStatus   String      @default("PENDING")
+  paymentId       String?
+  notes           String?
+  trackingNumber  String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime
+  User            User        @relation(fields: [userId], references: [id])
+  OrderItem       OrderItem[]
+
+  @@index([createdAt])
+  @@index([status])
+  @@index([userId])
+}
+
+model OrderItem {
+  id           String  @id
+  orderId      String
+  productId    String
+  productName  String
+  productImage String?
+  quantity     Int
+  unitPrice    Float
+  total        Float
+  Product      Product @relation(fields: [productId], references: [id])
+  Order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([orderId])
+}
+
+model Product {
+  id                String         @id @default(uuid())
+  name              String
+  slug              String         @unique
+  description       String?
+  price             Float
+  compareAtPrice    Float?
+  costPrice         Float?
+  sku               String?        @unique
+  barcode           String?
+  stockQuantity     Int            @default(0)
+  lowStockThreshold Int            @default(5)
+  trackInventory    Boolean        @default(true)
+  weight            Float?
+  dimensions        String?
+  images            String         @default("[]")
+  tags              String         @default("[]")
+  metaTitle         String?
+  metaDescription   String?
+  isActive          Boolean        @default(true)
+  isFeatured        Boolean        @default(false)
+  isPublished       Boolean        @default(true)
+  sortOrder         Int            @default(0)
+  brandId           String?
+  categoryId        String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime
+  CartItem          CartItem[]
+  OrderItem         OrderItem[]
+  category          Category?      @relation(fields: [categoryId], references: [id])
+  brand             Brand?         @relation(fields: [brandId], references: [id])
+  Review            Review[]
+  WishlistItem      WishlistItem[]
+
+  @@index([sortOrder])
+  @@index([isFeatured])
+  @@index([isActive])
+  @@index([brandId])
+  @@index([categoryId])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Review {
+  id         String   @id
+  userId     String
+  productId  String
+  rating     Int
+  title      String?
+  comment    String?
+  isApproved Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+  Product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([productId])
+}
+
+model User {
+  id                       String         @id @default(uuid())
+  email                    String         @unique
+  password                 String
+  firstName                String?
+  lastName                 String?
+  phone                    String?
+  role                     String         @default("USER")
+  avatar                   String?
+  isActive                 Boolean        @default(true)
+  emailVerified            Boolean        @default(false)
+  verificationToken        String?
+  verificationTokenExpires DateTime?
+  createdAt                DateTime       @default(now())
+  updatedAt                DateTime
+  Address                  Address[]
+  CartItem                 CartItem[]
+  Order                    Order[]
+  RefreshToken             RefreshToken[]
+  Review                   Review[]
+  WishlistItem             WishlistItem[]
+}
+
+model WishlistItem {
+  id        String   @id
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  Product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
