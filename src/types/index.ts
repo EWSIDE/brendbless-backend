@@ -1,3 +1,16 @@
+import { Request } from 'express';
+
+export type UserRole = 'USER' | 'ADMIN' | 'MODERATOR';
+
+export interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    userId?: string;
+    email: string;
+    role: UserRole;
+  };
+}
+
 export interface User {
   id: string;
   email: string;
@@ -11,7 +24,6 @@ export interface User {
   updatedAt: Date;
 }
 
-export type UserRole = 'USER' | 'ADMIN' | 'MODERATOR';
 export type AddressType = 'SHIPPING' | 'BILLING';
 export type OrderStatus = 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
 export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';

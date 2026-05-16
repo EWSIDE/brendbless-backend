@@ -14,12 +14,13 @@ router.get('/', (_req: Request, res: Response) => {
 });
 
 // PUT /api/settings - обновить настройки (только админ)
-router.put('/', async (req: Request, res: Response) => {
+router.put('/', async (req: Request, res: Response): Promise<void> => {
   try {
     // Simple auth check via Authorization header
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ success: false, error: 'Unauthorized' });
+      res.status(401).json({ success: false, error: 'Unauthorized' });
+      return;
     }
 
     // In production, verify JWT token here

@@ -1,9 +1,8 @@
 import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/env.js';
-import { AuthenticatedRequest, JwtPayload } from '../types/index.js';
+import { AuthenticatedRequest, JwtPayload, UserRole } from '../types/index.js';
 import { prisma } from '../config/database.js';
-import { Role } from '@prisma/client';
 
 export const authenticate = async (
   req: AuthenticatedRequest,
@@ -57,7 +56,7 @@ export const authenticate = async (
     req.user = {
       id: user.id,
       email: user.email,
-      role: user.role as Role
+      role: user.role as UserRole
     };
 
     next();
@@ -89,7 +88,7 @@ export const authenticate = async (
 
 export const optionalAuth = async (
   req: AuthenticatedRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
@@ -115,7 +114,7 @@ export const optionalAuth = async (
           req.user = {
             id: user.id,
             email: user.email,
-            role: user.role as Role
+            role: user.role as UserRole
           };
         }
       }
@@ -128,7 +127,7 @@ export const optionalAuth = async (
   }
 };
 
-export const requireRole = (...roles: Role[]) => {
+export const requireRole = (...roles: UserRole[]) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({
