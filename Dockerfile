@@ -1,23 +1,23 @@
+# Stage 1: Build
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Install ALL dependencies (including devDependencies for TypeScript build)
 COPY package*.json ./
 RUN npm ci
 
-# Copy source and build
-COPY . .
+COPY prisma ./prisma
 RUN npx prisma generate
+
+COPY . .
 RUN npm run build
 
-# Production stage — only runtime dependencies
+# Stage 2: Production
 FROM node:20-alpine AS runner
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
-# Copy built files and prisma schema
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
