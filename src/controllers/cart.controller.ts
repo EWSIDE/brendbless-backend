@@ -5,7 +5,7 @@ import { AuthenticatedRequest, ApiResponse } from '../types/index.js';
 
 export class CartController {
   // Get cart
-  getCart = async (req: AuthenticatedRequest, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  getCart = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const cart = await cartService.getCart(req.user!.id);
 
@@ -19,7 +19,7 @@ export class CartController {
   };
 
   // Add to cart
-  addToCart = async (req: AuthenticatedRequest, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  addToCart = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -44,7 +44,7 @@ export class CartController {
   };
 
   // Update cart item
-  updateCartItem = async (req: AuthenticatedRequest, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  updateCartItem = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -71,7 +71,7 @@ export class CartController {
   };
 
   // Remove from cart
-  removeFromCart = async (req: AuthenticatedRequest, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  removeFromCart = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const { productId } = req.params;
       const cart = await cartService.removeFromCart(req.user!.id, productId);
@@ -87,7 +87,7 @@ export class CartController {
   };
 
   // Clear cart
-  clearCart = async (req: AuthenticatedRequest, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  clearCart = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const cart = await cartService.clearCart(req.user!.id);
 
@@ -102,7 +102,7 @@ export class CartController {
   };
 
   // Validate cart
-  validateCart = async (req: AuthenticatedRequest, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  validateCart = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const validation = await cartService.validateCart(req.user!.id);
 

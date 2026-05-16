@@ -4,7 +4,7 @@ import { AuthenticatedRequest, ApiResponse } from '../types/index.js';
 
 export class CategoryController {
   // Get all categories
-  getCategories = async (_req: Request, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  getCategories = async (_req: Request, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const categories = await categoryService.getCategories();
 
@@ -18,7 +18,7 @@ export class CategoryController {
   };
 
   // Get single category
-  getCategory = async (req: Request, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  getCategory = async (req: Request, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const { slug } = req.params;
       const category = await categoryService.getCategory(slug);
@@ -33,7 +33,7 @@ export class CategoryController {
   };
 
   // Create category (admin)
-  createCategory = async (req: AuthenticatedRequest, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  createCategory = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const category = await categoryService.createCategory(req.body);
 
@@ -48,7 +48,7 @@ export class CategoryController {
   };
 
   // Update category (admin)
-  updateCategory = async (req: AuthenticatedRequest, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  updateCategory = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
       const category = await categoryService.updateCategory(id, req.body);
@@ -64,7 +64,7 @@ export class CategoryController {
   };
 
   // Delete category (admin)
-  deleteCategory = async (req: AuthenticatedRequest, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  deleteCategory = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
       await categoryService.deleteCategory(id);

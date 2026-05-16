@@ -5,7 +5,7 @@ import { AuthenticatedRequest, ApiResponse } from '../types/index.js';
 
 export class ProductController {
   // Get products (public)
-  getProducts = async (req: Request, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  getProducts = async (req: Request, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const query = {
         page: parseInt(req.query.page as string) || 1,
@@ -33,7 +33,7 @@ export class ProductController {
   };
 
   // Get single product (public)
-  getProduct = async (req: Request, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  getProduct = async (req: Request, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const { identifier } = req.params;
       const product = await productService.getProduct(identifier);
@@ -48,7 +48,7 @@ export class ProductController {
   };
 
   // Get featured products (public)
-  getFeatured = async (_req: Request, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  getFeatured = async (_req: Request, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const products = await productService.getFeaturedProducts(10);
 
@@ -62,7 +62,7 @@ export class ProductController {
   };
 
   // Get products on sale (public)
-  getOnSale = async (_req: Request, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  getOnSale = async (_req: Request, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const products = await productService.getOnSaleProducts(20);
 
@@ -76,7 +76,7 @@ export class ProductController {
   };
 
   // Get related products (public)
-  getRelated = async (req: Request, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  getRelated = async (req: Request, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const { productId } = req.params;
       const products = await productService.getRelatedProducts(productId);
@@ -91,7 +91,7 @@ export class ProductController {
   };
 
   // Create product (admin)
-  createProduct = async (req: AuthenticatedRequest, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  createProduct = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -115,7 +115,7 @@ export class ProductController {
   };
 
   // Update product (admin)
-  updateProduct = async (req: AuthenticatedRequest, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  updateProduct = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
       const product = await productService.updateProduct(id, req.body);
@@ -131,7 +131,7 @@ export class ProductController {
   };
 
   // Delete product (admin)
-  deleteProduct = async (req: AuthenticatedRequest, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  deleteProduct = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
       await productService.deleteProduct(id);
@@ -146,7 +146,7 @@ export class ProductController {
   };
 
   // Reorder products (admin) - batch update sortOrder
-  reorderProducts = async (req: AuthenticatedRequest, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  reorderProducts = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const { items } = req.body;
       if (!Array.isArray(items)) {

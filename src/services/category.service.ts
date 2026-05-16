@@ -125,7 +125,7 @@ export class CategoryService {
         name: data.name,
         slug,
         description: data.description,
-        parentId: data.parentId,
+        parentId: data.parentId ?? null,
         sortOrder: data.sortOrder || 0
       }
     });

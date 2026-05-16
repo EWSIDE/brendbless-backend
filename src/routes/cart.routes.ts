@@ -5,7 +5,7 @@ import { authenticate, AuthenticatedRequest } from '../middleware/auth.middlewar
 const router = Router();
 
 // Get cart
-router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const cart = await cartService.getCart(req.user!.userId);
     res.json({ success: true, data: cart });
@@ -15,7 +15,7 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response) =
 });
 
 // Get cart count
-router.get('/count', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/count', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const count = await cartService.getCartCount(req.user!.userId);
     res.json({ success: true, data: { count } });
@@ -25,11 +25,12 @@ router.get('/count', authenticate, async (req: AuthenticatedRequest, res: Respon
 });
 
 // Add to cart
-router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { productId, quantity = 1 } = req.body;
     if (!productId) {
-      return res.status(400).json({ success: false, error: 'Product ID is required' });
+      res.status(400).json({ success: false, error: 'Product ID is required' });
+      return;
     }
     const item = await cartService.addToCart(req.user!.userId, productId, quantity);
     res.status(201).json({ success: true, data: item });
@@ -39,7 +40,7 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
 });
 
 // Update cart item
-router.put('/:productId', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.put('/:productId', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { quantity } = req.body;
     const item = await cartService.updateCartItem(req.user!.userId, req.params.productId, quantity);
@@ -50,7 +51,7 @@ router.put('/:productId', authenticate, async (req: AuthenticatedRequest, res: R
 });
 
 // Remove from cart
-router.delete('/:productId', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.delete('/:productId', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     await cartService.removeFromCart(req.user!.userId, req.params.productId);
     res.json({ success: true, message: 'Item removed from cart' });
@@ -60,7 +61,7 @@ router.delete('/:productId', authenticate, async (req: AuthenticatedRequest, res
 });
 
 // Clear cart
-router.delete('/', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.delete('/', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     await cartService.clearCart(req.user!.userId);
     res.json({ success: true, message: 'Cart cleared' });

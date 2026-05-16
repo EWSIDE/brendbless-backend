@@ -5,7 +5,7 @@ import { AuthenticatedRequest, ApiResponse } from '../types/index.js';
 
 export class OrderController {
   // Create order
-  createOrder = async (req: AuthenticatedRequest, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  createOrder = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -30,7 +30,7 @@ export class OrderController {
   };
 
   // Get user's orders
-  getOrders = async (req: AuthenticatedRequest, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  getOrders = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
@@ -47,7 +47,7 @@ export class OrderController {
   };
 
   // Get single order
-  getOrder = async (req: AuthenticatedRequest, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  getOrder = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const { orderId } = req.params;
       const order = await orderService.getOrder(orderId, req.user!.id);
@@ -62,7 +62,7 @@ export class OrderController {
   };
 
   // Get order by number (for guests)
-  getOrderByNumber = async (req: Request, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  getOrderByNumber = async (req: Request, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const { orderNumber } = req.params;
       const { email } = req.query;
@@ -87,7 +87,7 @@ export class OrderController {
   };
 
   // Cancel order
-  cancelOrder = async (req: AuthenticatedRequest, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  cancelOrder = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const { orderId } = req.params;
       const order = await orderService.cancelOrder(orderId, req.user!.id);
@@ -103,7 +103,7 @@ export class OrderController {
   };
 
   // Admin: Get all orders
-  getAllOrders = async (req: Request, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  getAllOrders = async (req: Request, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
@@ -121,7 +121,7 @@ export class OrderController {
   };
 
   // Admin: Update order status
-  updateOrderStatus = async (req: Request, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  updateOrderStatus = async (req: Request, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const { orderId } = req.params;
       const { status } = req.body;

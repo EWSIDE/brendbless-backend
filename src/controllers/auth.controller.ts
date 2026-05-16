@@ -5,7 +5,7 @@ import { AuthenticatedRequest, ApiResponse } from '../types/index.js';
 
 export class AuthController {
   // Register
-  register = async (req: Request, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  register = async (req: Request, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -18,23 +18,6 @@ export class AuthController {
 
       const result = await authService.register(req.body);
 
-      // Set cookies in production
-      if (process.env.NODE_ENV === 'production') {
-        res.cookie('accessToken', result.tokens.accessToken, {
-          httpOnly: true,
-          secure: true,
-          sameSite: 'strict',
-          maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-        });
-        
-        res.cookie('refreshToken', result.tokens.refreshToken, {
-          httpOnly: true,
-          secure: true,
-          sameSite: 'strict',
-          maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-        });
-      }
-
       res.status(201).json({
         success: true,
         data: result,
@@ -46,7 +29,7 @@ export class AuthController {
   };
 
   // Login
-  login = async (req: Request, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  login = async (req: Request, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -57,18 +40,18 @@ export class AuthController {
         return;
       }
 
-      const result = await authService.login(req.body);
+      const result = await authService.login(req.body.email, req.body.password);
 
       // Set cookies in production
       if (process.env.NODE_ENV === 'production') {
-        res.cookie('accessToken', result.tokens.accessToken, {
+        res.cookie('accessToken', result.accessToken, {
           httpOnly: true,
           secure: true,
           sameSite: 'strict',
           maxAge: 7 * 24 * 60 * 60 * 1000
         });
         
-        res.cookie('refreshToken', result.tokens.refreshToken, {
+        res.cookie('refreshToken', result.refreshToken, {
           httpOnly: true,
           secure: true,
           sameSite: 'strict',
@@ -87,7 +70,7 @@ export class AuthController {
   };
 
   // Refresh tokens
-  refresh = async (req: Request, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  refresh = async (req: Request, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const { refreshToken } = req.body;
 
@@ -99,7 +82,7 @@ export class AuthController {
         return;
       }
 
-      const tokens = await authService.refreshTokens(refreshToken);
+      const tokens = await authService.refreshToken(refreshToken);
 
       // Update cookies
       if (process.env.NODE_ENV === 'production') {
@@ -128,10 +111,10 @@ export class AuthController {
   };
 
   // Logout
-  logout = async (req: Request, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  logout = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const { refreshToken } = req.body;
-      await authService.logout(refreshToken);
+      await authService.logout(req.user?.id || '', refreshToken);
 
       // Clear cookies
       res.clearCookie('accessToken');
@@ -147,9 +130,9 @@ export class AuthController {
   };
 
   // Get current user
-  me = async (req: AuthenticatedRequest, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  me = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
-      const user = await authService.getCurrentUser(req.user!.id);
+      const user = await authService.getMe(req.user!.id);
 
       res.json({
         success: true,
@@ -161,7 +144,7 @@ export class AuthController {
   };
 
   // Update profile
-  updateProfile = async (req: AuthenticatedRequest, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  updateProfile = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const user = await authService.updateProfile(req.user!.id, req.body);
 
@@ -176,7 +159,7 @@ export class AuthController {
   };
 
   // Change password
-  changePassword = async (req: AuthenticatedRequest, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  changePassword = async (req: AuthenticatedRequest, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const { currentPassword, newPassword } = req.body;
       
@@ -192,7 +175,7 @@ export class AuthController {
   };
 
   // Forgot password
-  forgotPassword = async (req: Request, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  forgotPassword = async (req: Request, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
       const { email } = req.body;
       await authService.forgotPassword(email);
@@ -208,10 +191,10 @@ export class AuthController {
   };
 
   // Reset password
-  resetPassword = async (req: Request, res: Response<ApiResponse>, next: NextFunction): Promise<void> => {
+  resetPassword = async (req: Request, res: Response<ApiResponse<unknown>>, next: NextFunction): Promise<void> => {
     try {
-      const { token, password } = req.body;
-      await authService.resetPassword(token, password);
+      const { token, email, password } = req.body;
+      await authService.resetPassword(token, email, password);
 
       res.json({
         success: true,

@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import { Product } from '../types';
 
 const prisma = new PrismaClient();
 
@@ -99,6 +98,31 @@ export class CartService {
       _sum: { quantity: true },
     });
     return count._sum.quantity || 0;
+  }
+
+  async validateCart(userId: string) {
+    const items = await prisma.cartItem.findMany({
+      where: { userId },
+      include: {
+        product: {
+          select: {
+            id: true, name: true, price: true, stockQuantity: true,
+            trackInventory: true, isActive: true, isPublished: true,
+          },
+        },
+      },
+    });
+
+    const issues: { productId: string; issue: string }[] = [];
+    for (const item of items) {
+      if (!item.product || !item.product.isActive || !item.product.isPublished) {
+        issues.push({ productId: item.productId, issue: 'Product is no longer available' });
+      } else if (item.product.trackInventory && item.product.stockQuantity < item.quantity) {
+        issues.push({ productId: item.productId, issue: `Only ${item.product.stockQuantity} units available` });
+      }
+    }
+
+    return { valid: issues.length === 0, issues };
   }
 }
 

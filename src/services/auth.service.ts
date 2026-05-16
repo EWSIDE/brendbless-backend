@@ -10,7 +10,7 @@ import { config } from '../config/env';
 const prisma = new PrismaClient();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'brendbless-super-secret-key-change-in-production';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+const _JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 const REFRESH_TOKEN_EXPIRES_IN = parseInt(process.env.REFRESH_TOKEN_EXPIRES_DAYS || '30');
 
 export class AuthService {
@@ -151,7 +151,7 @@ export class AuthService {
 
   async refreshToken(token: string) {
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+      const _decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
       const storedToken = await prisma.refreshToken.findUnique({
         where: { token },
         include: { User: true },

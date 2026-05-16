@@ -14,11 +14,12 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
-export const authenticate = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const authenticate = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ success: false, error: 'No token provided' });
+      res.status(401).json({ success: false, error: 'No token provided' });
+      return;
     }
 
     const token = authHeader.substring(7);
@@ -30,7 +31,8 @@ export const authenticate = async (req: AuthenticatedRequest, res: Response, nex
     });
 
     if (!user || !user.isActive) {
-      return res.status(401).json({ success: false, error: 'User not found or inactive' });
+      res.status(401).json({ success: false, error: 'User not found or inactive' });
+      return;
     }
 
     req.user = {
@@ -41,15 +43,16 @@ export const authenticate = async (req: AuthenticatedRequest, res: Response, nex
 
     next();
   } catch {
-    return res.status(401).json({ success: false, error: 'Invalid or expired token' });
+    res.status(401).json({ success: false, error: 'Invalid or expired token' });
   }
 };
 
-export const optionalAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const optionalAuth = async (req: AuthenticatedRequest, _res: Response, next: NextFunction): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return next();
+      next();
+      return;
     }
 
     const token = authHeader.substring(7);
@@ -74,12 +77,14 @@ export const optionalAuth = async (req: AuthenticatedRequest, res: Response, nex
 };
 
 export const requireRole = (...roles: UserRole[]) => {
-  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
-      return res.status(401).json({ success: false, error: 'Authentication required' });
+      res.status(401).json({ success: false, error: 'Authentication required' });
+      return;
     }
     if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ success: false, error: 'Insufficient permissions' });
+      res.status(403).json({ success: false, error: 'Insufficient permissions' });
+      return;
     }
     next();
   };

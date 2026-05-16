@@ -50,7 +50,7 @@ export class ConflictError extends AppError {
 export const errorHandler = (
   err: Error,
   _req: Request,
-  res: Response<ApiResponse>,
+  res: Response<ApiResponse<unknown>>,
   _next: NextFunction
 ): void => {
   console.error('Error:', err);
@@ -124,7 +124,7 @@ export const errorHandler = (
 
 export const notFoundHandler = (
   _req: Request,
-  res: Response<ApiResponse>
+  res: Response<ApiResponse<unknown>>
 ): void => {
   res.status(404).json({
     success: false,
