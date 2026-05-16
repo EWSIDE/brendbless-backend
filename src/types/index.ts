@@ -181,6 +181,17 @@ export interface WishlistItem {
   createdAt: Date;
 }
 
+// Express extended request with user
+import { Request } from 'express';
+
+export interface AuthenticatedRequest extends Request {
+  user?: {
+    userId: string;
+    email: string;
+    role: string;
+  };
+}
+
 // Auth types
 export interface JwtPayload {
   userId: string;
