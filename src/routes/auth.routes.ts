@@ -80,20 +80,6 @@ router.post('/resend-verification', async (req: Request, res: Response) => {
   }
 });
 
-// Login
-router.post('/login', async (req: Request, res: Response) => {
-  try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ success: false, error: 'Email and password are required' });
-    }
-    const result = await authService.login(email, password);
-    res.json({ success: true, data: result });
-  } catch (err: any) {
-    res.status(401).json({ success: false, error: err.message });
-  }
-});
-
 // Refresh token
 router.post('/refresh', async (req: Request, res: Response) => {
   try {
@@ -109,15 +95,19 @@ router.post('/refresh', async (req: Request, res: Response) => {
 });
 
 // Logout
-router.post('/logout', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/logout', async (req: Request, res: Response) => {
   try {
     const refreshToken = extractRefreshToken(req) || req.body?.refreshToken;
     if (refreshToken) {
-      await authService.logout(req.user!.userId, refreshToken);
+      // Try to delete the refresh token, ignore errors if token doesn't exist
+      try {
+        await authService.logoutByToken(refreshToken);
+      } catch {}
     }
     res.json({ success: true, message: 'Logged out successfully' });
   } catch (err: any) {
-    res.status(400).json({ success: false, error: err.message });
+    // Always return success for logout
+    res.json({ success: true, message: 'Logged out' });
   }
 });
 
