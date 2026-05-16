@@ -1,18 +1,21 @@
 # Stage 1: Build
 FROM node:20-alpine AS builder
+RUN apk add --no-cache openssl
 WORKDIR /app
 
 COPY package*.json ./
 RUN npm ci
 
 COPY prisma ./prisma
-RUN npx prisma generate
+# Provide dummy DATABASE_URL for prisma generate (only needs schema, not actual connection)
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npx prisma generate
 
 COPY . .
 RUN npm run build
 
 # Stage 2: Production
 FROM node:20-alpine AS runner
+RUN apk add --no-cache openssl
 WORKDIR /app
 
 COPY package*.json ./
