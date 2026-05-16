@@ -1,9 +1,10 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Load environment variables
-const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env';
-dotenv.config({ path: path.resolve(process.cwd(), envFile) });
+// Load .env file only in development (in production, env vars are injected by the platform)
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+}
 
 export const config = {
   nodeEnv: process.env.NODE_ENV || 'development',

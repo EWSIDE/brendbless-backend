@@ -130,8 +130,8 @@ const startServer = async (): Promise<void> => {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
 
-    // Start listening
-    app.listen(config.port, () => {
+    // Start listening on 0.0.0.0 (required for containerized environments like Railway)
+    app.listen(config.port, '0.0.0.0', () => {
       console.log(`
 ╔════════════════════════════════════════════════════════════╗
 ║                                                            ║
