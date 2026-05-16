@@ -3,12 +3,14 @@ FROM node:20-alpine AS builder
 RUN apk add --no-cache openssl
 WORKDIR /app
 
+# Set dummy DATABASE_URL for all prisma operations during build
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+
 COPY package*.json ./
 RUN npm ci
 
 COPY prisma ./prisma
-# Provide dummy DATABASE_URL for prisma generate (only needs schema, not actual connection)
-RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npx prisma generate
+RUN npx prisma generate
 
 COPY . .
 RUN npm run build
@@ -17,6 +19,9 @@ RUN npm run build
 FROM node:20-alpine AS runner
 RUN apk add --no-cache openssl
 WORKDIR /app
+
+# Set dummy DATABASE_URL for npm ci postinstall scripts (will be overridden at runtime)
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 
 COPY package*.json ./
 RUN npm ci --omit=dev
