@@ -24,40 +24,34 @@ app.use(helmet({
   crossOriginResourcePolicy: false
 }));
 
-// CORS — allow frontend origins + handle preflight explicitly
-const allowedOrigins = process.env.FRONTEND_URL
-  ? process.env.FRONTEND_URL.split(',').map((o) => o.trim())
-  : ['http://localhost:3000', 'http://localhost:5173'];
+// CORS — manual middleware for maximum compatibility with Railway proxy
+app.use((req, res, next) => {
+  const origin = req.headers.origin as string | undefined;
+  const allowedOrigins = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(',').map((o) => o.trim())
+    : ['http://localhost:3000', 'http://localhost:5173'];
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (server-to-server, curl, etc.)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    // Also allow any subdomain of brandbless.ru
-    if (/^https?:\/\/([\w-]+\.)?brandbless\.ru$/.test(origin)) return callback(null, true);
-    callback(new Error(`CORS: origin ${origin} not allowed`));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Refresh-Token'],
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
-}));
+  const isAllowed =
+    !origin ||
+    allowedOrigins.includes(origin) ||
+    /^https?:\/\/([\w-]+\.)?brandbless\.ru$/.test(origin);
 
-// Explicit OPTIONS handler for all routes (belt-and-suspenders for Railway proxy)
-app.options('*', cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    if (/^https?:\/\/([\w-]+\.)?brandbless\.ru$/.test(origin)) return callback(null, true);
-    callback(new Error(`CORS: origin ${origin} not allowed`));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Refresh-Token'],
-  optionsSuccessStatus: 204,
-}));
+  if (isAllowed) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Refresh-Token');
+    res.setHeader('Access-Control-Max-Age', '86400');
+  }
+
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    res.status(204).end();
+    return;
+  }
+
+  next();
+});
 
 // Compression
 app.use(compression());
