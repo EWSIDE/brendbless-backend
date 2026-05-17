@@ -50,7 +50,12 @@ if (config.isDevelopment) {
 }
 
 // Static files (uploads)
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+// UPLOAD_DIR env var points to Railway Volume mount path (e.g. /data/uploads)
+// Falls back to ./uploads for local dev
+const uploadsStaticDir = process.env.UPLOAD_DIR
+  ? path.resolve(process.env.UPLOAD_DIR)
+  : path.join(process.cwd(), 'uploads');
+app.use('/uploads', express.static(uploadsStaticDir));
 
 // Rate limiting
 app.use('/api', apiLimiter);
@@ -127,11 +132,15 @@ const startServer = async (): Promise<void> => {
     await connectDatabase();
 
     // Create uploads directory if not exists
+    // Uses UPLOAD_DIR env var (Railway Volume mount) or falls back to ./uploads
     const fs = await import('fs');
-    const uploadsDir = path.join(process.cwd(), 'uploads');
+    const uploadsDir = process.env.UPLOAD_DIR
+      ? path.resolve(process.env.UPLOAD_DIR)
+      : path.join(process.cwd(), 'uploads');
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
+    console.log(`[uploads] Storage directory: ${uploadsDir}`);
 
     // Start listening on 0.0.0.0 (required for containerized environments like Railway)
     app.listen(config.port, '0.0.0.0', () => {

@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { JwtPayload, UserRole } from '../types';
-import { sendVerificationEmail } from './email.service';
+import { sendVerificationEmail, sendPasswordResetEmail } from './email.service';
 import { config } from '../config/env';
 
 const prisma = new PrismaClient();
@@ -259,7 +259,7 @@ export class AuthService {
     const frontendUrl = config.frontendUrl;
     const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
     
-    await sendVerificationEmail(email, resetUrl);
+    await sendPasswordResetEmail(email, resetUrl);
   }
 
   async resetPassword(token: string, email: string, newPassword: string): Promise<void> {

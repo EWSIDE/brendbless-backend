@@ -30,7 +30,9 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY prisma ./prisma
-COPY uploads ./uploads
+# uploads/ is NOT baked into the image.
+# On Railway: mount a Volume at /data/uploads and set UPLOAD_DIR=/data/uploads
+# Locally: falls back to ./uploads (created at runtime by server.ts)
 
 EXPOSE 5000
 
