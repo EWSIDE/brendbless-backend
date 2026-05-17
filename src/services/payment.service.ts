@@ -70,30 +70,47 @@ export class PaymentService {
   }
 
   async handleWebhook(body: any): Promise<void> {
-    const event = body.event;
-    const payment = body.object as YukassaPayment;
+    const event = body.event as string;
+    const obj = body.object as YukassaPayment;
 
-    if (!payment || !payment.metadata?.order_id) {
+    console.log(`[YuKassa Webhook] Event: ${event}, Object ID: ${obj?.id}`);
+
+    // Handle refund events separately
+    if (event === 'refund.succeeded') {
+      const paymentId = (obj as any)?.payment_id;
+      if (paymentId) {
+        console.log(`[YuKassa Webhook] Refund succeeded for payment ${paymentId}`);
+        // Could update order status to REFUNDED if needed
+      }
+      return;
+    }
+
+    // For payment events
+    if (!obj || !obj.metadata?.order_id) {
       console.warn('[YuKassa Webhook] No order_id in metadata');
       return;
     }
 
-    const orderId = payment.metadata.order_id;
+    const orderId = obj.metadata.order_id;
 
-    console.log(`[YuKassa Webhook] Event: ${event}, Payment: ${payment.id}, Order: ${orderId}, Status: ${payment.status}`);
+    switch (event) {
+      case 'payment.succeeded':
+        await orderService.updatePaymentStatus(orderId, 'PAID', obj.id);
+        console.log(`[YuKassa] Order ${orderId} marked as PAID`);
+        break;
 
-    switch (payment.status) {
-      case 'succeeded':
-        await orderService.updatePaymentStatus(orderId, 'PAID', payment.id);
+      case 'payment.canceled':
+        await orderService.updatePaymentStatus(orderId, 'FAILED', obj.id);
+        console.log(`[YuKassa] Order ${orderId} marked as FAILED`);
         break;
-      case 'canceled':
-        await orderService.updatePaymentStatus(orderId, 'FAILED', payment.id);
+
+      case 'payment.waiting_for_capture':
+        // Auto-capture is enabled, but log it
+        console.log(`[YuKassa] Order ${orderId} waiting for capture — auto-capture should handle this`);
         break;
-      case 'waiting_for_capture':
-        // Auto-capture is enabled, this shouldn't happen
-        break;
+
       default:
-        console.log(`[YuKassa Webhook] Unhandled status: ${payment.status}`);
+        console.log(`[YuKassa Webhook] Unhandled event: ${event}`);
     }
   }
 }
