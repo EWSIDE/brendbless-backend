@@ -14,6 +14,10 @@ async function getToken(): Promise<string> {
     return cachedToken.token;
   }
 
+  if (!CDEK_CLIENT_ID || !CDEK_CLIENT_SECRET) {
+    throw new Error('CDEK credentials not configured (CDEK_CLIENT_ID / CDEK_CLIENT_SECRET)');
+  }
+
   const params = new URLSearchParams({
     grant_type: 'client_credentials',
     client_id: CDEK_CLIENT_ID,
@@ -27,13 +31,15 @@ async function getToken(): Promise<string> {
   });
 
   if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    console.error('[CDEK] Auth failed:', res.status, text);
     throw new Error(`CDEK auth failed: ${res.status}`);
   }
 
   const data = await res.json() as { access_token: string; expires_in: number };
   cachedToken = {
     token: data.access_token,
-    expiresAt: Date.now() + (data.expires_in - 60) * 1000, // refresh 60s before expiry
+    expiresAt: Date.now() + (data.expires_in - 60) * 1000,
   };
 
   return cachedToken.token;
