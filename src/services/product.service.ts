@@ -306,6 +306,10 @@ export class ProductService {
       throw new NotFoundError('Product');
     }
 
+    // Remove related records first to avoid FK constraint errors
+    await prisma.cartItem.deleteMany({ where: { productId: id } });
+    await prisma.orderItem.deleteMany({ where: { productId: id } });
+
     // Hard delete - permanently remove from database
     await prisma.product.delete({
       where: { id }

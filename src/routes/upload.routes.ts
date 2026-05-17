@@ -52,7 +52,10 @@ const saveLocally = (
   const ext = path.extname(originalName);
   const filename = `${crypto.randomBytes(16).toString('hex')}${ext}`;
   fs.writeFileSync(path.join(uploadsDir, filename), buffer);
-  return { filename, url: `/uploads/${filename}`, size: buffer.length };
+  // Return full URL so frontend can load images correctly
+  const apiUrl = process.env.API_URL || '';
+  const url = apiUrl ? `${apiUrl}/uploads/${filename}` : `/uploads/${filename}`;
+  return { filename, url, size: buffer.length };
 };
 
 // Upload single file
