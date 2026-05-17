@@ -6,6 +6,7 @@ import orderRoutes from './order.routes.js';
 import categoryRoutes from './category.routes.js';
 import settingsRoutes from './settings.routes.js';
 import uploadRoutes from './upload.routes.js';
+import paymentRoutes from './payment.routes.js';
 
 const router = Router();
 
@@ -28,5 +29,8 @@ router.use('/settings', settingsRoutes);
 
 // Public upload (no auth required for uploads)
 router.use('/upload', uploadRoutes);
+
+// Payments (YuKassa)
+router.use('/payments', paymentRoutes);
 
 export default router;

@@ -1,0 +1,101 @@
+import { orderService } from './order.service.js';
+
+const YUKASSA_SHOP_ID = process.env.YUKASSA_SHOP_ID || '1356610';
+const YUKASSA_SECRET_KEY = process.env.YUKASSA_SECRET_KEY || '';
+const YUKASSA_API_URL = 'https://api.yookassa.ru/v3';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://brandbless.ru';
+
+interface YukassaPayment {
+  id: string;
+  status: string;
+  amount: { value: string; currency: string };
+  confirmation?: { type: string; confirmation_url?: string };
+  metadata?: { order_id?: string };
+}
+
+export class PaymentService {
+  private getAuthHeader(): string {
+    return 'Basic ' + Buffer.from(`${YUKASSA_SHOP_ID}:${YUKASSA_SECRET_KEY}`).toString('base64');
+  }
+
+  async createPayment(orderId: string, amount: number, description: string, customerEmail?: string): Promise<{ paymentUrl: string; paymentId: string }> {
+    const idempotenceKey = `order-${orderId}-${Date.now()}`;
+
+    const body = {
+      amount: {
+        value: amount.toFixed(2),
+        currency: 'RUB',
+      },
+      confirmation: {
+        type: 'redirect',
+        return_url: `${FRONTEND_URL}/payment-success?orderId=${orderId}`,
+      },
+      capture: true,
+      description,
+      metadata: {
+        order_id: orderId,
+      },
+      ...(customerEmail ? { receipt: { customer: { email: customerEmail }, items: [{ description, quantity: '1', amount: { value: amount.toFixed(2), currency: 'RUB' }, vat_code: 1 }] } } : {}),
+    };
+
+    const response = await fetch(`${YUKASSA_API_URL}/payments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': this.getAuthHeader(),
+        'Idempotence-Key': idempotenceKey,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('[YuKassa] Create payment error:', response.status, errorData);
+      throw new Error(`Ошибка создания платежа: ${response.status}`);
+    }
+
+    const payment = (await response.json()) as YukassaPayment;
+
+    if (!payment.confirmation?.confirmation_url) {
+      throw new Error('Не удалось получить ссылку на оплату');
+    }
+
+    // Save payment ID to order
+    await orderService.updatePaymentStatus(orderId, 'PENDING', payment.id);
+
+    return {
+      paymentUrl: payment.confirmation.confirmation_url,
+      paymentId: payment.id,
+    };
+  }
+
+  async handleWebhook(body: any): Promise<void> {
+    const event = body.event;
+    const payment = body.object as YukassaPayment;
+
+    if (!payment || !payment.metadata?.order_id) {
+      console.warn('[YuKassa Webhook] No order_id in metadata');
+      return;
+    }
+
+    const orderId = payment.metadata.order_id;
+
+    console.log(`[YuKassa Webhook] Event: ${event}, Payment: ${payment.id}, Order: ${orderId}, Status: ${payment.status}`);
+
+    switch (payment.status) {
+      case 'succeeded':
+        await orderService.updatePaymentStatus(orderId, 'PAID', payment.id);
+        break;
+      case 'canceled':
+        await orderService.updatePaymentStatus(orderId, 'FAILED', payment.id);
+        break;
+      case 'waiting_for_capture':
+        // Auto-capture is enabled, this shouldn't happen
+        break;
+      default:
+        console.log(`[YuKassa Webhook] Unhandled status: ${payment.status}`);
+    }
+  }
+}
+
+export const paymentService = new PaymentService();
