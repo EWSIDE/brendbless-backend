@@ -7,6 +7,7 @@ import categoryRoutes from './category.routes.js';
 import settingsRoutes from './settings.routes.js';
 import uploadRoutes from './upload.routes.js';
 import paymentRoutes from './payment.routes.js';
+import cdekRoutes from './cdek.routes.js';
 
 const router = Router();
 
@@ -32,5 +33,8 @@ router.use('/upload', uploadRoutes);
 
 // Payments (YuKassa)
 router.use('/payments', paymentRoutes);
+
+// CDEK delivery
+router.use('/cdek', cdekRoutes);
 
 export default router;
