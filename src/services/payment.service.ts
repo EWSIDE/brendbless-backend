@@ -1,5 +1,6 @@
 import { orderService } from './order.service.js';
 import { getYukassaConfig, getSettings } from './settings.service.js';
+import { sendOrderNotification } from './telegram.service.js';
 
 const YUKASSA_API_URL = 'https://api.yookassa.ru/v3';
 
@@ -138,6 +139,25 @@ export class PaymentService {
       case 'payment.succeeded':
         await orderService.updatePaymentStatus(orderId, 'PAID', obj.id);
         console.log(`[YuKassa] Order ${orderId} marked as PAID`);
+
+        // Send Telegram notification
+        try {
+          const paidOrder = await orderService.getOrderById(orderId);
+          await sendOrderNotification({
+            orderNumber: paidOrder.orderNumber,
+            orderId: paidOrder.id,
+            total: paidOrder.total,
+            items: (paidOrder.items || []).map((item: any) => ({
+              productName: item.productName,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              total: item.total,
+            })),
+            customerEmail: undefined, // email not available in webhook context
+          });
+        } catch (notifErr) {
+          console.error('[Telegram] Notification failed:', (notifErr as Error).message);
+        }
         break;
 
       case 'payment.canceled':
