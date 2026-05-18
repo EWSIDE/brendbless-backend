@@ -6,9 +6,8 @@ import { getSettings } from './settings.service.js';
 const prisma = new PrismaClient();
 
 function generateOrderNumber() {
-  const timestamp = Date.now().toString(36).toUpperCase();
-  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `ORD-${timestamp}-${random}`;
+  const num = Math.floor(100000 + Math.random() * 900000);
+  return `${num}`;
 }
 
 export class OrderService {
