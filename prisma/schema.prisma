@@ -106,6 +106,7 @@ model OrderItem {
   productId    String
   productName  String
   productImage String?
+  size         String?
   quantity     Int
   unitPrice    Float
   total        Float

@@ -6,6 +6,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'https://brandbless.ru';
 
 interface OrderItem {
   productName: string;
+  size?: string | null;
   quantity: number;
   unitPrice: number;
   total: number;
@@ -23,7 +24,7 @@ export async function sendOrderNotification(order: OrderNotification): Promise<v
   try {
     // Build message
     const itemsList = order.items
-      .map((item) => `  • ${item.productName} × ${item.quantity} — ${item.total.toLocaleString('ru-RU')} ₽`)
+      .map((item) => `  • ${item.productName}${item.size ? ` (${item.size})` : ''} × ${item.quantity} — ${item.total.toLocaleString('ru-RU')} ₽`)
       .join('\n');
 
     const text = [

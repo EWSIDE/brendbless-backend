@@ -145,13 +145,14 @@ export interface OrderItem {
   product?: Product;
   productName: string;
   productImage?: string | null;
+  size?: string | null;
   quantity: number;
   unitPrice: number;
   total: number;
 }
 
 export interface OrderInput {
-  items: { productId: string; quantity: number }[];
+  items: { productId: string; quantity: number; size?: string }[];
   shippingAddress?: AddressInput;
   billingAddress?: AddressInput;
   paymentMethod?: string;
