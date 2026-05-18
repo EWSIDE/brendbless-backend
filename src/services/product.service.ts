@@ -1,6 +1,7 @@
 import { prisma } from '../config/database.js';
 import { ProductQueryDto, CreateProductDto, UpdateProductDto } from '../types/index.js';
 import { NotFoundError } from '../middleware/errorHandler.js';
+import { deleteFromStorage, isStorageConfigured } from './storage.service.js';
 import slugify from 'slugify';
 
 export class ProductService {
@@ -304,6 +305,27 @@ export class ProductService {
 
     if (!product) {
       throw new NotFoundError('Product');
+    }
+
+    // Delete product images from cloud storage
+    if (isStorageConfigured()) {
+      try {
+        const images: string[] = JSON.parse(product.images || '[]');
+        for (const imageUrl of images) {
+          // Extract filename from URL (last segment after /uploads/)
+          const match = imageUrl.match(/uploads\/([^/?]+)/);
+          if (match && match[1]) {
+            try {
+              await deleteFromStorage(match[1]);
+              console.log(`[Product] Deleted image: ${match[1]}`);
+            } catch (e) {
+              console.warn(`[Product] Failed to delete image ${match[1]}:`, (e as Error).message);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[Product] Error parsing images for cleanup:', (e as Error).message);
+      }
     }
 
     // Remove related records first to avoid FK constraint errors
