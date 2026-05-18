@@ -9,6 +9,7 @@ interface AppSettings {
   shopName: string;
   supportEmail: string;
   telegramManager: string;
+  telegramChannel: string;
 }
 
 let settings: AppSettings = {
@@ -19,6 +20,7 @@ let settings: AppSettings = {
   shopName: process.env.SHOP_NAME || 'BRANDBLESS',
   supportEmail: process.env.SUPPORT_EMAIL || 'support@brandbless.ru',
   telegramManager: process.env.TELEGRAM_MANAGER || 'https://t.me/bless_mng',
+  telegramChannel: process.env.TELEGRAM_CHANNEL || 'https://t.me/brandbless',
 };
 
 export function getSettings(): AppSettings {
@@ -32,6 +34,7 @@ export function getPublicSettings() {
     shopName: settings.shopName,
     supportEmail: settings.supportEmail,
     telegramManager: settings.telegramManager,
+    telegramChannel: settings.telegramChannel,
     frontendUrl: settings.frontendUrl,
     yukassaConfigured: !!(settings.yukassaShopId && settings.yukassaSecretKey),
   };
