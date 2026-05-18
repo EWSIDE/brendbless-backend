@@ -45,9 +45,9 @@ export class OrderService {
 
     const subtotal = orderItems.reduce((sum, item) => sum + item.total, 0);
     const shippingCost = subtotal >= 500 ? 0 : 50;
-    const tax = subtotal * 0.2;
+    const tax = 0; // Цены уже включают НДС
     const discount = 0;
-    const total = subtotal + shippingCost + tax - discount;
+    const total = subtotal + shippingCost - discount;
 
     const shippingAddr = shippingAddress ? JSON.stringify(shippingAddress) : null;
     const billingAddr = billingAddress ? JSON.stringify(billingAddress) : null;
