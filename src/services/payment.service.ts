@@ -1,4 +1,4 @@
-товарimport { orderService } from './order.service.js';
+import { orderService } from './order.service.js';
 
 const YUKASSA_API_URL = 'https://api.yookassa.ru/v3';
 
