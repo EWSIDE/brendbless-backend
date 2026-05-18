@@ -1,13 +1,16 @@
 import { orderService } from './order.service.js';
+import { getYukassaConfig, getSettings } from './settings.service.js';
 
 const YUKASSA_API_URL = 'https://api.yookassa.ru/v3';
 
 function getYukassaShopId(): string {
-  return process.env.YUKASSA_SHOP_ID || '1356610';
+  const config = getYukassaConfig();
+  return config.shopId || process.env.YUKASSA_SHOP_ID || '';
 }
 
 function getYukassaSecretKey(): string {
-  const key = process.env.YUKASSA_SECRET_KEY || '';
+  const config = getYukassaConfig();
+  const key = config.secretKey || process.env.YUKASSA_SECRET_KEY || '';
   if (!key) {
     console.error('[YuKassa] YUKASSA_SECRET_KEY is not set! Payment will fail with 401.');
   }
@@ -15,7 +18,8 @@ function getYukassaSecretKey(): string {
 }
 
 function getFrontendUrl(): string {
-  const url = process.env.FRONTEND_URL || 'https://brandbless.ru';
+  const settings = getSettings();
+  const url = settings.frontendUrl || process.env.FRONTEND_URL || 'https://brandbless.ru';
   // В production FRONTEND_URL может содержать несколько URL через запятую
   return url.split(',')[0].trim();
 }
