@@ -1,4 +1,4 @@
-import { orderService } from './order.service.js';
+товарimport { orderService } from './order.service.js';
 
 const YUKASSA_API_URL = 'https://api.yookassa.ru/v3';
 
@@ -36,7 +36,10 @@ export class PaymentService {
   async createPayment(orderId: string, amount: number, description: string, customerEmail?: string): Promise<{ paymentUrl: string; paymentId: string }> {
     const idempotenceKey = `order-${orderId}-${Date.now()}`;
 
-    const body = {
+    // Обрезаем description до 128 символов (лимит ЮKassa)
+    const safeDescription = description.length > 128 ? description.substring(0, 128) : description;
+
+    const body: Record<string, any> = {
       amount: {
         value: amount.toFixed(2),
         currency: 'RUB',
@@ -46,12 +49,31 @@ export class PaymentService {
         return_url: `${getFrontendUrl()}/payment-success?orderId=${orderId}`,
       },
       capture: true,
-      description,
+      description: safeDescription,
       metadata: {
         order_id: orderId,
       },
-      ...(customerEmail ? { receipt: { customer: { email: customerEmail }, items: [{ description, quantity: '1', amount: { value: amount.toFixed(2), currency: 'RUB' }, vat_code: 1 }] } } : {}),
     };
+
+    // Добавляем receipt только если есть email
+    if (customerEmail) {
+      body.receipt = {
+        customer: { email: customerEmail },
+        items: [{
+          description: safeDescription,
+          quantity: '1',
+          amount: {
+            value: amount.toFixed(2),
+            currency: 'RUB',
+          },
+          vat_code: 1,
+          payment_subject: 'commodity',
+          payment_mode: 'full_payment',
+        }],
+      };
+    }
+
+    console.log('[YuKassa] Creating payment:', JSON.stringify(body, null, 2));
 
     const response = await fetch(`${YUKASSA_API_URL}/payments`, {
       method: 'POST',
