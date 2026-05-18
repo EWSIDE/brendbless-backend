@@ -35,7 +35,7 @@ router.put('/', async (req: Request, res: Response) => {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
-    const settings = updateSettings(req.body);
+    const settings = await updateSettings(req.body);
     res.json({ success: true, data: settings });
   } catch (error) {
     res.status(500).json({ success: false, error: 'Failed to update settings' });

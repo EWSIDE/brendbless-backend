@@ -219,3 +219,10 @@ model WishlistItem {
   @@unique([userId, productId])
   @@index([userId])
 }
+
+model Setting {
+  id    String @id @default("main")
+  key   String @unique
+  value String
+  updatedAt DateTime @updatedAt
+}
