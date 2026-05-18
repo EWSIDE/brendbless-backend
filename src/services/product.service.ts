@@ -174,9 +174,7 @@ export class ProductService {
 
   // Create product (admin)
   async createProduct(data: CreateProductDto): Promise<any> {
-    const slug = data.slug 
-      ? this.generateSlug(data.slug)
-      : await this.generateUniqueSlug(data.name);
+    const slug = await this.generateUniqueSlug(data.slug || data.name);
 
     // Parse images: could be stringified JSON array or actual array
     let imagesData: string[] | string = data.images || [];
