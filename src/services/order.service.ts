@@ -19,12 +19,16 @@ export class OrderService {
     }
 
     const productIds = items.map((i) => i.productId);
+    const uniqueProductIds = [...new Set(productIds)];
     const products = await prisma.product.findMany({
-      where: { id: { in: productIds }, isActive: true, isPublished: true },
+      where: { id: { in: uniqueProductIds }, isActive: true },
     });
 
-    if (products.length !== items.length) {
-      throw new Error('Some products not found or unavailable');
+    if (products.length !== uniqueProductIds.length) {
+      const foundIds = products.map(p => p.id);
+      const missingIds = uniqueProductIds.filter(id => !foundIds.includes(id));
+      console.error('[Order] Products not found or unavailable:', missingIds, 'Requested:', uniqueProductIds, 'Found:', foundIds);
+      throw new Error(`Some products not found or unavailable: ${missingIds.join(', ')}`);
     }
 
     const orderItems = items.map((item) => {
