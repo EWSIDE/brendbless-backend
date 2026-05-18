@@ -14,6 +14,8 @@ interface AppSettings {
   supportEmail: string;
   telegramManager: string;
   telegramChannel: string;
+  shippingCost: number;
+  freeShippingThreshold: number;
 }
 
 // Default values (used if not in DB)
@@ -26,6 +28,8 @@ const defaults: AppSettings = {
   supportEmail: process.env.SUPPORT_EMAIL || 'support@brandbless.ru',
   telegramManager: process.env.TELEGRAM_MANAGER || 'https://t.me/bless_mng',
   telegramChannel: process.env.TELEGRAM_CHANNEL || 'https://t.me/brandbless',
+  shippingCost: 50,
+  freeShippingThreshold: 5000,
 };
 
 // In-memory cache
@@ -51,6 +55,8 @@ async function loadFromDb(): Promise<AppSettings> {
       supportEmail: dbSettings.supportEmail || defaults.supportEmail,
       telegramManager: dbSettings.telegramManager || defaults.telegramManager,
       telegramChannel: dbSettings.telegramChannel || defaults.telegramChannel,
+      shippingCost: dbSettings.shippingCost ? Number(dbSettings.shippingCost) : defaults.shippingCost,
+      freeShippingThreshold: dbSettings.freeShippingThreshold ? Number(dbSettings.freeShippingThreshold) : defaults.freeShippingThreshold,
     };
   } catch (e) {
     // Table doesn't exist yet — use defaults + env vars
@@ -77,6 +83,8 @@ export function getPublicSettings() {
     telegramChannel: s.telegramChannel,
     frontendUrl: s.frontendUrl,
     yukassaConfigured: !!(s.yukassaShopId && s.yukassaSecretKey),
+    shippingCost: s.shippingCost,
+    freeShippingThreshold: s.freeShippingThreshold,
   };
 }
 

@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { OrderInput, OrderStatus, PaymentStatus } from '../types';
+import { getSettings } from './settings.service.js';
 
 const prisma = new PrismaClient();
 
@@ -44,7 +45,8 @@ export class OrderService {
     });
 
     const subtotal = orderItems.reduce((sum, item) => sum + item.total, 0);
-    const shippingCost = subtotal >= 500 ? 0 : 50;
+    const settings = getSettings();
+    const shippingCost = subtotal >= settings.freeShippingThreshold ? 0 : settings.shippingCost;
     const tax = 0; // Цены уже включают НДС
     const discount = 0;
     const total = subtotal + shippingCost - discount;
