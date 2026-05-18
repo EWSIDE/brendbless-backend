@@ -26,6 +26,21 @@ router.get('/my-orders', authenticate, async (req: AuthenticatedRequest, res: Re
   }
 });
 
+// Get all orders (admin) - must be before /:id to avoid route conflict
+router.get('/admin/all', authenticate, requireRole('ADMIN', 'MODERATOR'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const result = await orderService.getAllOrders(page, limit, {
+      status: req.query.status as string,
+      userId: req.query.userId as string,
+    });
+    res.json({ success: true, ...result });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Get order by ID (user's own order)
 router.get('/:id', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
