@@ -48,6 +48,7 @@ export function getAdminSettings() {
     yukassaSecretKeyMasked: settings.yukassaSecretKey
       ? '••••••' + settings.yukassaSecretKey.slice(-4)
       : '',
+    yukassaConfigured: !!(settings.yukassaShopId && settings.yukassaSecretKey),
   };
 }
 
