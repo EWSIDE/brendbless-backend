@@ -1,9 +1,24 @@
 import { orderService } from './order.service.js';
 
-const YUKASSA_SHOP_ID = process.env.YUKASSA_SHOP_ID || '1356610';
-const YUKASSA_SECRET_KEY = process.env.YUKASSA_SECRET_KEY || '';
 const YUKASSA_API_URL = 'https://api.yookassa.ru/v3';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://brandbless.ru';
+
+function getYukassaShopId(): string {
+  return process.env.YUKASSA_SHOP_ID || '1356610';
+}
+
+function getYukassaSecretKey(): string {
+  const key = process.env.YUKASSA_SECRET_KEY || '';
+  if (!key) {
+    console.error('[YuKassa] YUKASSA_SECRET_KEY is not set! Payment will fail with 401.');
+  }
+  return key;
+}
+
+function getFrontendUrl(): string {
+  const url = process.env.FRONTEND_URL || 'https://brandbless.ru';
+  // В production FRONTEND_URL может содержать несколько URL через запятую
+  return url.split(',')[0].trim();
+}
 
 interface YukassaPayment {
   id: string;
@@ -15,7 +30,7 @@ interface YukassaPayment {
 
 export class PaymentService {
   private getAuthHeader(): string {
-    return 'Basic ' + Buffer.from(`${YUKASSA_SHOP_ID}:${YUKASSA_SECRET_KEY}`).toString('base64');
+    return 'Basic ' + Buffer.from(`${getYukassaShopId()}:${getYukassaSecretKey()}`).toString('base64');
   }
 
   async createPayment(orderId: string, amount: number, description: string, customerEmail?: string): Promise<{ paymentUrl: string; paymentId: string }> {
@@ -28,7 +43,7 @@ export class PaymentService {
       },
       confirmation: {
         type: 'redirect',
-        return_url: `${FRONTEND_URL}/payment-success?orderId=${orderId}`,
+        return_url: `${getFrontendUrl()}/payment-success?orderId=${orderId}`,
       },
       capture: true,
       description,
