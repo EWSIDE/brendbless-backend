@@ -61,6 +61,21 @@ router.get('/number/:orderNumber', authenticate, async (req: AuthenticatedReques
   }
 });
 
+// Update order item size (user can set missing size)
+router.patch('/items/:itemId/size', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { size } = req.body;
+    if (!size) {
+      res.status(400).json({ success: false, error: 'Size is required' });
+      return;
+    }
+    const updated = await orderService.updateOrderItemSize(req.user!.userId, req.params.itemId, size);
+    res.json({ success: true, data: updated });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 // Cancel order
 router.patch('/:id/cancel', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {

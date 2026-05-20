@@ -101,6 +101,34 @@ export class OrderService {
     return { ...order!, items: order!.OrderItem };
   }
 
+  async updateOrderItemSize(userId: string, itemId: string, size: string) {
+    // Find the order item and verify it belongs to this user
+    const item = await prisma.orderItem.findUnique({
+      where: { id: itemId },
+      include: { Order: true },
+    });
+
+    if (!item) {
+      throw new Error('Order item not found');
+    }
+
+    if (item.Order.userId !== userId) {
+      throw new Error('Access denied');
+    }
+
+    if (!size || size.trim() === '') {
+      throw new Error('Size is required');
+    }
+
+    // Update the size
+    const updated = await prisma.orderItem.update({
+      where: { id: itemId },
+      data: { size: size.trim() } as any,
+    });
+
+    return updated;
+  }
+
   async getUserOrders(userId: string, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
     const [orders, total] = await Promise.all([
