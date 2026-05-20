@@ -218,6 +218,146 @@ export class OrderService {
       completedOrders,
     };
   }
+
+  async getDetailedStatistics(period: string = '30d') {
+    // Determine date range
+    let dateFrom: Date | null = null;
+    const now = new Date();
+    switch (period) {
+      case '7d':
+        dateFrom = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '30d':
+        dateFrom = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case '90d':
+        dateFrom = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        dateFrom = null; // all time
+    }
+
+    const dateFilter = dateFrom ? { createdAt: { gte: dateFrom } } : {};
+    const paidFilter = { paymentStatus: 'PAID', ...dateFilter };
+
+    // 1. Key metrics
+    const [totalOrdersCount, revenueAgg, avgAgg] = await Promise.all([
+      prisma.order.count({ where: paidFilter }),
+      prisma.order.aggregate({ _sum: { total: true }, where: paidFilter }),
+      prisma.order.aggregate({ _avg: { total: true }, where: paidFilter }),
+    ]);
+
+    const totalRevenue = revenueAgg._sum.total || 0;
+    const averageCheck = avgAgg._avg.total || 0;
+
+    // 2. Revenue by day (for chart)
+    const paidOrders = await prisma.order.findMany({
+      where: paidFilter,
+      select: { createdAt: true, total: true },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const revenueByDay: Record<string, { revenue: number; orders: number }> = {};
+    for (const order of paidOrders) {
+      const day = order.createdAt.toISOString().split('T')[0];
+      if (!revenueByDay[day]) revenueByDay[day] = { revenue: 0, orders: 0 };
+      revenueByDay[day].revenue += order.total;
+      revenueByDay[day].orders += 1;
+    }
+
+    const chartData = Object.entries(revenueByDay).map(([date, data]) => ({
+      date,
+      revenue: Math.round(data.revenue),
+      orders: data.orders,
+    }));
+
+    // 3. Top products (by paid orders in period)
+    const paidOrderIds = await prisma.order.findMany({
+      where: paidFilter,
+      select: { id: true },
+    });
+    const orderIds = paidOrderIds.map(o => o.id);
+
+    let topProducts: { productName: string; totalQuantity: number; totalRevenue: number }[] = [];
+    if (orderIds.length > 0) {
+      const itemsGrouped = await prisma.orderItem.groupBy({
+        by: ['productName'],
+        where: { orderId: { in: orderIds } },
+        _sum: { quantity: true, total: true },
+      });
+      topProducts = itemsGrouped
+        .map(g => ({
+          productName: g.productName,
+          totalQuantity: g._sum.quantity || 0,
+          totalRevenue: Math.round(g._sum.total || 0),
+        }))
+        .sort((a, b) => b.totalRevenue - a.totalRevenue)
+        .slice(0, 15);
+    }
+
+    // 4. Items to order (from PENDING/PROCESSING paid orders - not yet shipped)
+    const pendingPaidOrders = await prisma.order.findMany({
+      where: {
+        paymentStatus: 'PAID',
+        status: { in: ['PENDING', 'PROCESSING'] },
+      },
+      select: { id: true },
+    });
+    const pendingOrderIds = pendingPaidOrders.map(o => o.id);
+
+    let itemsToOrder: { productName: string; size: string | null; quantity: number }[] = [];
+    if (pendingOrderIds.length > 0) {
+      const pendingItems = await prisma.orderItem.groupBy({
+        by: ['productName', 'size'],
+        where: { orderId: { in: pendingOrderIds } },
+        _sum: { quantity: true },
+      });
+      itemsToOrder = pendingItems
+        .map(g => ({
+          productName: g.productName,
+          size: g.size,
+          quantity: g._sum.quantity || 0,
+        }))
+        .sort((a, b) => b.quantity - a.quantity);
+    }
+
+    // 5. Orders by status
+    const statusCounts = await prisma.order.groupBy({
+      by: ['status'],
+      where: { paymentStatus: 'PAID', ...dateFilter },
+      _count: true,
+    });
+    const byStatus = statusCounts.map(s => ({ status: s.status, count: s._count }));
+
+    // 6. Size statistics (all paid orders in period)
+    let sizeStats: { size: string; quantity: number }[] = [];
+    if (orderIds.length > 0) {
+      const sizeGrouped = await prisma.orderItem.groupBy({
+        by: ['size'],
+        where: { orderId: { in: orderIds }, size: { not: null } },
+        _sum: { quantity: true },
+      });
+      sizeStats = sizeGrouped
+        .map(g => ({
+          size: g.size || 'N/A',
+          quantity: g._sum.quantity || 0,
+        }))
+        .sort((a, b) => b.quantity - a.quantity);
+    }
+
+    return {
+      metrics: {
+        totalRevenue: Math.round(totalRevenue),
+        totalOrders: totalOrdersCount,
+        averageCheck: Math.round(averageCheck),
+      },
+      chartData,
+      topProducts,
+      itemsToOrder,
+      byStatus,
+      sizeStats,
+    };
+  }
 }
 
 export const orderService = new OrderService();

@@ -120,4 +120,15 @@ router.get('/admin/stats', authenticate, requireRole('ADMIN'), async (_req: Auth
   }
 });
 
+// Get detailed statistics (admin)
+router.get('/admin/statistics', authenticate, requireRole('ADMIN'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const period = (req.query.period as string) || '30d';
+    const stats = await orderService.getDetailedStatistics(period);
+    res.json({ success: true, data: stats });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;
