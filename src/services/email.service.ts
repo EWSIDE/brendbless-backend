@@ -8,6 +8,8 @@ const config = {
     user: process.env.SMTP_USER || 'support@brandbless.ru',
     pass: process.env.SMTP_PASS || 'DBMyjhL5zj7wLZlGKhvV',
   },
+  tls: { rejectUnauthorized: false },
+  family: 4 as const,
 };
 
 const transporter = nodemailer.createTransport(config);
