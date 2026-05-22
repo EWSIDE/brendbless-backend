@@ -1,15 +1,14 @@
 import nodemailer from 'nodemailer';
 
 const config = {
-  host: process.env.SMTP_HOST || 'smtp.mail.ru',
+  host: process.env.SMTP_HOST || '2a00:1148:1000:101:5:3:0:33',
   port: parseInt(process.env.SMTP_PORT || '465', 10),
   secure: true,
   auth: {
     user: process.env.SMTP_USER || 'support@brandbless.ru',
     pass: process.env.SMTP_PASS || 'DBMyjhL5zj7wLZlGKhvV',
   },
-  tls: { rejectUnauthorized: false },
-  family: 4 as const,
+  tls: { servername: 'smtp.mail.ru', rejectUnauthorized: false },
 };
 
 const transporter = nodemailer.createTransport(config);
