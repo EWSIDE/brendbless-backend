@@ -24,8 +24,9 @@ router.post('/register', async (req: Request, res: Response) => {
       } 
     });
   } catch (err: any) {
-    console.error('Registration error:', err);
-    res.status(400).json({ success: false, error: 'Не удалось создать аккаунт. Попробуйте позже.' });
+    console.error('Registration error:', err?.message || err);
+    const message = err?.message || 'Не удалось создать аккаунт. Попробуйте позже.';
+    res.status(400).json({ success: false, error: message });
   }
 });
 
