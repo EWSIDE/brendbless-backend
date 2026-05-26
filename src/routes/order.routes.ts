@@ -76,6 +76,27 @@ router.patch('/items/:itemId/size', authenticate, async (req: AuthenticatedReque
   }
 });
 
+// Admin: Update order item size (bypass ownership check)
+router.patch('/admin/items/:itemId/size', authenticate, requireRole('ADMIN'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { size } = req.body;
+    if (!size) {
+      res.status(400).json({ success: false, error: 'Size is required' });
+      return;
+    }
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    const updated = await prisma.orderItem.update({
+      where: { id: req.params.itemId },
+      data: { size },
+    });
+    await prisma.$disconnect();
+    res.json({ success: true, data: updated });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 // Cancel order
 router.patch('/:id/cancel', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
