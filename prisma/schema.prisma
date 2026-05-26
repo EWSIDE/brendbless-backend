@@ -101,17 +101,17 @@ model Order {
 }
 
 model OrderItem {
-  id           String  @id
+  id           String   @id
   orderId      String
-  productId    String
+  productId    String?
   productName  String
   productImage String?
   size         String?
   quantity     Int
   unitPrice    Float
   total        Float
-  Product      Product @relation(fields: [productId], references: [id])
-  Order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  Product      Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  Order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([productId])
   @@index([orderId])
